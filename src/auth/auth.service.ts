@@ -80,13 +80,12 @@ export class AuthService{
 
       const { nom_contrasena: __, ...rest } = user;
 
+
+      const tokenG = await this.signJWT(rest);
+
       return {
         ...user,
-        token: this.signJWT({
-          numero_empleado: rest.numero_empleado,
-          nom_correo: rest.nom_correo,
-          nom_usuario: rest.nom_usuario
-        })
+        token: tokenG
       };
 
     } catch (error) {
@@ -125,9 +124,12 @@ export class AuthService{
 
       const { nom_contrasena: __, ...rest } = user;
 
+
+      const tokenG = await this.signJWT(rest);
+
       return {
         user: rest,
-        token: await this.signJWT(rest),
+        token: tokenG,
       };
     } catch (error) {
       throw new RpcException({
