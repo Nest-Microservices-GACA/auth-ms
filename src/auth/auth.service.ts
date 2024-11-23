@@ -6,9 +6,11 @@ import * as bcrypt from 'bcrypt';
 import { LoginUserDto, RegisterUserDto } from './dto';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
-import { envs, NATS_SERVICE } from 'src/config';
+import { envs, NATS_SERVICE, USUARIOS_SERVICE } from 'src/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Auth } from './entities/auth.entity';
+import { firstValueFrom } from 'rxjs';
+import { Rol } from './interfaces/rol';
 
 @Injectable()
 export class AuthService{
@@ -18,7 +20,8 @@ export class AuthService{
     // @Inject(NATS_SERVICE) private readonly client: ClientProxy,
     @InjectRepository(Auth)
     private readonly userRepository: Repository<Auth>,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    @Inject(USUARIOS_SERVICE) private readonly usuarioClient: ClientProxy,
   ) {
   }
 
@@ -33,9 +36,17 @@ export class AuthService{
         secret: envs.jwtSecret,
       });
 
+      const rol = await this.getRolByUser(user.idu_rol);
+
       return {
-        user: user,
-        token: await this.signJWT(user),
+        user: {
+          ...user,
+          rol //Agregar el rol como un objeto anidado
+        },
+        token: await this.signJWT({
+          ...user,
+          rol
+        }),
       }
 
     } catch (error) {
@@ -80,8 +91,11 @@ export class AuthService{
 
       const { nom_contrasena: __, ...rest } = user;
 
-
-      const tokenG = await this.signJWT(rest);
+      const rol = await this.getRolByUser(rest.idu_rol);
+      const tokenG = await this.signJWT({
+        ...rest,
+        rol
+      });
 
       return {
         ...user,
@@ -103,7 +117,7 @@ export class AuthService{
 
       const user = await this.userRepository.findOne({
         where: { numero_empleado },
-        select: { numero_empleado:true, nom_correo: true, nom_contrasena: true, idu_usuario: true, nom_usuario:true }
+        select: { numero_empleado:true, nom_correo: true, nom_contrasena: true, idu_usuario: true, nom_usuario:true, idu_rol:true }
       });
 
       if (!user) {
@@ -123,12 +137,19 @@ export class AuthService{
       }
 
       const { nom_contrasena: __, ...rest } = user;
-
-
-      const tokenG = await this.signJWT(rest);
+    
+      const rol = await this.getRolByUser(rest.idu_rol);
+      
+      const tokenG = await this.signJWT({
+        ...rest,
+        rol: rol.nom_rol
+      });
 
       return {
-        user: rest,
+        user: {
+          ...rest,
+          rol // Agregar el rol como un objeto anidado
+        },
         token: tokenG,
       };
     } catch (error) {
@@ -155,6 +176,19 @@ export class AuthService{
 
       this.handleDBErrors(error);
       return false;
+    }
+  }
+
+  private async getRolByUser(idu_rol: number): Promise<Rol>{
+    try {
+      
+      const rol = await firstValueFrom(this.usuarioClient.send('get_role', idu_rol));
+
+      return rol;
+  
+    } catch (error) {
+      console.log(error)
+      this.handleDBErrors(error);
     }
   }
 
