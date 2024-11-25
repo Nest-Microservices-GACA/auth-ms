@@ -16,6 +16,7 @@ interface EnvVars {
   NATS_SERVERS: string[];
 
   JWT_SECRET: string;
+  SECRET_KEY: string;
 }
 
 const envsSchema = joi.object({
@@ -31,6 +32,7 @@ const envsSchema = joi.object({
 
   NATS_SERVERS: joi.array().items( joi.string() ).required(),
   JWT_SECRET: joi.string().required(),
+  SECRET_KEY: joi.string().required(),
 })
 .unknown(true);
 
@@ -61,4 +63,5 @@ export const envs = {
   natsServers: envVars.NATS_SERVERS,
 
   jwtSecret: envVars.JWT_SECRET,
+  secretKey: envVars.SECRET_KEY,
 };

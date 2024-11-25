@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypto';
+import { envs } from 'src/config';
 
 @Injectable()
 export class CommonService {
@@ -9,7 +10,7 @@ export class CommonService {
   private readonly key: Buffer;
 
   constructor(private configService: ConfigService) {
-    const secretKey = this.configService.get<string>('SECRET_KEY');
+    const secretKey = envs.secretKey;
     this.key = createHash('sha256').update(secretKey).digest().slice(0, 32);
   }
 

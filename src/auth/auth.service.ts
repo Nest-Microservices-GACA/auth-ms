@@ -11,6 +11,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Auth } from './entities/auth.entity';
 import { firstValueFrom } from 'rxjs';
 import { Rol } from './interfaces/rol';
+import { CommonService } from './common/common.service';
 
 @Injectable()
 export class AuthService{
@@ -22,6 +23,7 @@ export class AuthService{
     private readonly userRepository: Repository<Auth>,
     private readonly jwtService: JwtService,
     @Inject(USUARIOS_SERVICE) private readonly usuarioClient: ClientProxy,
+    private readonly encryptionService: CommonService
   ) {
   }
 
@@ -50,7 +52,6 @@ export class AuthService{
       }
 
     } catch (error) {
-      console.log(error);
       throw new RpcException({
         status: 401,
         message: 'Invalid token'
@@ -75,10 +76,8 @@ export class AuthService{
         
       const user = this.userRepository.create({
         ...userData,
-        // nom_correo: this.encryptionService.encrypt(createUserDto.nom_correo),
-        // nom_usuario: this.encryptionService.encrypt(createUserDto.nom_usuario),
-        nom_correo: registerUserDto.nom_correo,
-        nom_usuario: registerUserDto.nom_usuario,
+        nom_correo: this.encryptionService.encrypt(registerUserDto.nom_correo),
+        nom_usuario: this.encryptionService.encrypt(registerUserDto.nom_usuario),
         nom_contrasena: bcrypt.hashSync( nom_contrasena, 10 ),
         idu_rol: registerUserDto.idu_rol
       });
@@ -86,8 +85,8 @@ export class AuthService{
       await this.userRepository.save( user )
       delete user.nom_contrasena;
 
-      // user.nom_correo = this.encryptionService.decrypt(user.nom_correo);
-      // user.nom_usuario = this.encryptionService.decrypt(user.nom_usuario);
+      user.nom_correo = this.encryptionService.decrypt(user.nom_correo);
+      user.nom_usuario = this.encryptionService.decrypt(user.nom_usuario);
 
       const { nom_contrasena: __, ...rest } = user;
 
@@ -137,6 +136,10 @@ export class AuthService{
       }
 
       const { nom_contrasena: __, ...rest } = user;
+
+      rest.nom_correo = this.encryptionService.decrypt(rest.nom_correo);
+      rest.nom_usuario = this.encryptionService.decrypt(rest.nom_usuario);
+      
     
       const rol = await this.getRolByUser(rest.idu_rol);
       
@@ -166,8 +169,8 @@ export class AuthService{
       const users = await this.userRepository.find();
 
       const emailExists = users.some(user => 
-        user.nom_correo === correo
-        // this.encryptionService.decrypt(user.nom_correo) === correo
+        // user.nom_correo === correo
+        this.encryptionService.decrypt(user.nom_correo) === correo
       );
 
       return emailExists;
