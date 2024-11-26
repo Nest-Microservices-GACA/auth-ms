@@ -66,7 +66,8 @@ export class AuthService{
     try {
 
       // const position = await this.client.send( 'get_positionById', registerUserDto.idu_rol );
-
+      const rol = await this.getRolByUser(registerUserDto.idu_rol);
+      
       if( await this.checkEmailExist( nom_correo ) ){
         throw new RpcException({
           status: 400,
@@ -90,7 +91,7 @@ export class AuthService{
 
       const { nom_contrasena: __, ...rest } = user;
 
-      const rol = await this.getRolByUser(rest.idu_rol);
+      
       const tokenG = await this.signJWT({
         ...rest,
         rol
