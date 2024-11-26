@@ -18,11 +18,10 @@ export class AuthService{
   private readonly logger = new Logger('AuthService');
 
   constructor(
-    // @Inject(NATS_SERVICE) private readonly client: ClientProxy,
+    @Inject(NATS_SERVICE) private readonly client: ClientProxy,
     @InjectRepository(Auth)
     private readonly userRepository: Repository<Auth>,
     private readonly jwtService: JwtService,
-    @Inject(USUARIOS_SERVICE) private readonly usuarioClient: ClientProxy,
     private readonly encryptionService: CommonService
   ) {
   }
@@ -186,7 +185,7 @@ export class AuthService{
   private async getRolByUser(idu_rol: number): Promise<Rol>{
     try {
       
-      const rol = await firstValueFrom(this.usuarioClient.send('get_role', idu_rol));
+      const rol = await firstValueFrom(this.client.send('get_role', idu_rol));
 
       return rol;
   

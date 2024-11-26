@@ -10,9 +10,6 @@ interface EnvVars {
   DB_PORT: number;
   PORT: number;
 
-  USUARIOS_MICROSERVICE_HOST: string;
-  USUARIOS_MICROSERVICE_PORT: number;
-
   NATS_SERVERS: string[];
 
   JWT_SECRET: string;
@@ -26,9 +23,6 @@ const envsSchema = joi.object({
   DB_NAME: joi.string().required(),
   DB_PORT: joi.number().required(),
   PORT: joi.number().required(),
-
-  USUARIOS_MICROSERVICE_HOST: joi.string().required(),
-  USUARIOS_MICROSERVICE_PORT: joi.number().required(),
 
   NATS_SERVERS: joi.array().items( joi.string() ).required(),
   JWT_SECRET: joi.string().required(),
@@ -56,9 +50,6 @@ export const envs = {
   dbName: envVars.DB_NAME,
   dbPort: envVars.DB_PORT,
   port: envVars.PORT,
-  
-  usuariosMicroserviceHost: envVars.USUARIOS_MICROSERVICE_HOST,
-  usuariosMicroservicePort: envVars.USUARIOS_MICROSERVICE_PORT,
 
   natsServers: envVars.NATS_SERVERS,
 
